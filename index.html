@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>GreenGuard — Early Warning for Green Land Loss, Hyderabad</title>
+<meta name="description" content="GreenGuard is a demo public accountability system for green land and forest loss around Hyderabad. Demo data / demo footage only." />
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌿</text></svg>" />
+<link rel="preconnect" href="https://unpkg.com" />
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+<link rel="stylesheet" href="css/styles.css?v=5" />
+</head>
+<body>
+
+<div class="demo-banner" role="note">
+  <span class="demo-dot"></span> Demo data / demo footage — all content is sample data for exhibition only.
+</div>
+
+<nav class="topnav" id="topnav" aria-label="Main navigation">
+  <a class="brand" href="#hero">🌿 <span>GreenGuard</span></a>
+  <div class="nav-links" id="navLinks">
+    <a href="#monitoring">Live Monitoring</a>
+    <a href="#zones">Watch Zones</a>
+    <a href="#report">Report</a>
+    <a href="#tracker">Tracker</a>
+    <a href="#ngos">NGOs</a>
+    <a href="#how">How It Works</a>
+    <a href="#goals">Goals</a>
+  </div>
+</nav>
+
+<!-- ============ 1. HERO ============ -->
+<header class="hero" id="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="container hero-inner">
+    <span class="badge">SDG 15 · Life on Land</span>
+    <h1>GreenGuard</h1>
+    <p class="tagline">Today, a complaint disappears. With GreenGuard, it stays on a public scoreboard until someone acts.</p>
+    <div class="hero-actions">
+      <a href="#report" class="btn btn-primary">Report an Incident</a>
+      <a href="#monitoring" class="btn btn-outline">View Live Monitoring</a>
+    </div>
+    <div class="counters">
+      <div class="counter-card"><span class="counter" data-target="128">0</span><span class="counter-label">Total Reports</span></div>
+      <div class="counter-card"><span class="counter" data-target="5">0</span><span class="counter-label">Zones Under Watch</span></div>
+      <div class="counter-card"><span class="counter" data-target="19">0</span><span class="counter-label">Ignored Reports</span></div>
+      <div class="counter-card"><span class="counter" data-target="11" data-suffix=" d">0</span><span class="counter-label">Average Response Time (days)</span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+<!-- ============ 2. LIVE MONITORING ============ -->
+<section class="section" id="monitoring">
+  <div class="container">
+    <h2>Live Monitoring</h2>
+    <p class="section-sub">Two eyes on the land: satellites watching for large clearings, and a small pilot set of cameras watching high-risk spots.</p>
+
+    <!-- Satellite group -->
+    <div class="monitor-block">
+      <div class="monitor-head">
+        <h3>🛰️ Satellite Monitoring</h3>
+        <span class="demo-chip">Demo footage</span>
+      </div>
+      <div class="sat-layout">
+        <div class="main-player" id="satMain">
+          <div class="video-frame satellite" id="satFrame">
+            <!-- JS renders one layer per satellite feed (video or orbital scene) -->
+          </div>
+          <div class="overlay-grid" id="satOverlay">
+            <span class="ov-live">● LIVE</span>
+            <span class="ov-label" id="satLabel">Zone 1 — Kadambari Reserve Edge</span>
+            <span class="ov-clock" data-clock="sat"></span>
+            <span class="ov-coords" id="satCoords">17.4521° N, 78.3390° E</span>
+            <span class="status-chip normal" id="satStatus">Normal</span>
+            <div class="detection-box" id="satLossBox" hidden></div>
+          </div>
+        </div>
+        <div class="sat-thumbs" id="satThumbs">
+          <!-- JS builds one thumbnail per satellite feed -->
+        </div>
+      </div>
+      <p class="sat-note" id="satNote"></p>
+    </div>
+
+    <!-- CCTV group -->
+    <div class="monitor-block">
+      <div class="monitor-head">
+        <h3>📹 Forest CCTV Surveillance <span class="small-tag">pilot — 3 cameras</span></h3>
+        <span class="demo-chip">Demo footage</span>
+      </div>
+      <div class="cctv-grid" id="cctvGrid">
+        <!-- JS builds 3 camera tiles, each on its own distinct footage -->
+      </div>
+
+      <!-- Interactive camera graph -->
+      <div class="cam-graph-block" id="camGraphBlock">
+        <div class="cam-graph-head">
+          <div>
+            <h4>Camera network — live link graph</h4>
+            <p class="cam-graph-hint">Hover a node to trace its uplink · click (or press Enter) to open that feed · drag a node to rearrange.</p>
+          </div>
+          <div class="cam-graph-tools">
+            <button type="button" class="graph-btn active" id="graphFlowBtn" aria-pressed="true">◉ Live flow</button>
+            <button type="button" class="graph-btn" id="graphResetBtn">⤾ Reset layout</button>
+          </div>
+        </div>
+        <div class="cam-graph-stage">
+          <svg id="camGraph" class="cam-graph-svg" viewBox="0 0 900 300" preserveAspectRatio="xMidYMid meet" role="group" aria-label="Interactive camera network diagram"></svg>
+          <div class="cam-tip" id="camTip" hidden></div>
+        </div>
+        <p class="cam-graph-status" id="camGraphStatus"></p>
+      </div>
+    </div>
+
+    <!-- Before / after slider -->
+    <div class="monitor-block">
+      <div class="monitor-head">
+        <h3>🔄 Before / After — Green Cover Change</h3>
+        <span class="demo-chip">Demo photo pair</span>
+      </div>
+      <div class="ba-block" id="baBlock">
+        <div class="ba-slider" id="baSlider">
+          <div class="ba-layer ba-before" id="baBefore">
+            <img class="ba-img" id="baImgCleared" src="assets/images/green-cover-2026.jpg"
+                 width="1280" height="750" loading="lazy" decoding="async"
+                 alt="Demo photo of the same land in 2026: tree cover cleared, bare earth and machine tracks where forest stood" />
+          </div>
+          <div class="ba-layer ba-after" id="baAfter">
+            <img class="ba-img" id="baImgDense" src="assets/images/green-cover-2025.jpg"
+                 width="1600" height="937" loading="lazy" decoding="async"
+                 alt="Demo photo of dense green tree cover around a lake and hill in 2025" />
+          </div>
+          <span class="ba-tag ba-tag-after">2025 — Dense green cover</span>
+          <span class="ba-tag ba-tag-before">2026 — Clearing detected</span>
+          <div class="ba-handle" id="baHandle" role="slider" aria-label="Before / after comparison slider, 2025 green cover versus 2026 clearing" aria-valuemin="0" aria-valuemax="100" aria-valuenow="50" tabindex="0">
+            <div class="ba-grip">⟷</div>
+          </div>
+        </div>
+        <div class="ba-stats">
+          <div class="ba-stat">
+            <span class="ba-num" id="baCover">89%</span>
+            <span class="ba-lbl">Green-share at the divider (pixel estimate)</span>
+          </div>
+          <div class="ba-stat">
+            <span class="ba-num ba-num-red" id="baDelta">−36 pts</span>
+            <span class="ba-lbl">Change between the two photos</span>
+          </div>
+          <p class="ba-hint">Drag the divider — left of it is 2025, right of it is 2026. Both photos show the same lake and road, and the green-share is counted from their pixels.</p>
+        </div>
+      </div>
+    </div>
+
+    <p class="monitor-note">Demo footage. Satellites flag large clearings and cameras give proof at high-risk spots. Cameras are a small pilot. Clouds can block satellites.</p>
+  </div>
+</section>
+
+<!-- ============ 3. WATCH ZONE MAP ============ -->
+<section class="section section-alt" id="zones">
+  <div class="container">
+    <h2>Watch Zone Map</h2>
+    <p class="section-sub">Five sample watch zones around the edge of Hyderabad. Tap a pin for details.
+      <span class="legend"><span class="dot dot-green"></span> Normal <span class="dot dot-yellow"></span> Under review <span class="dot dot-red"></span> Ignored reports</span>
+    </p>
+    <div id="map" class="zonemap"></div>
+  </div>
+</section>
+
+<!-- ============ 4. REPORT AN INCIDENT ============ -->
+<section class="section" id="report">
+  <div class="container">
+    <h2>Report an Incident</h2>
+    <p class="section-sub">A report with a live photo, GPS and timestamp becomes a public case on the tracker, not a message that quietly disappears.</p>
+
+    <div class="report-grid">
+      <form id="reportForm" class="report-form" novalidate>
+        <label class="field">
+          <span>Photo evidence</span>
+          <input type="file" id="photoInput" accept="image/*" />
+          <small class="form-hint">Live photo with GPS and time required. Blur faces and number plates.</small>
+        </label>
+        <div class="photo-preview" id="photoPreview" hidden>
+          <img id="photoImg" alt="Uploaded evidence preview" />
+          <button type="button" class="btn-tiny" id="photoRemove">Remove photo</button>
+        </div>
+
+        <label class="field">
+          <span>Location (GPS)</span>
+          <div class="gps-row">
+            <input type="text" id="gpsInput" placeholder="17.xxx N, 78.xxx E — auto-fills, or type manually" />
+            <button type="button" class="btn btn-small" id="gpsBtn">📍 Capture GPS</button>
+          </div>
+          <span class="err" id="gpsErr" hidden></span>
+        </label>
+
+        <div class="field-row">
+          <label class="field">
+            <span>Date &amp; time (auto)</span>
+            <input type="text" id="dateTime" readonly />
+          </label>
+          <label class="field">
+            <span>Type of incident</span>
+            <select id="incidentType" required>
+              <option value="">Select type…</option>
+              <option>Tree cutting</option>
+              <option>Land clearing</option>
+              <option>Burning</option>
+              <option>Dumping</option>
+            </select>
+          </label>
+        </div>
+
+        <label class="field">
+          <span>Description</span>
+          <textarea id="description" rows="3" placeholder="What did you see? Keep it factual: what, where, when."></textarea>
+        </label>
+
+        <button type="submit" class="btn btn-primary btn-block">Submit Report →</button>
+        <div class="success-msg" id="reportSuccess" hidden></div>
+      </form>
+
+      <aside class="report-side">
+        <div class="side-card">
+          <h4>Why GPS, time and a live photo?</h4>
+          <p>Facts make a report verifiable and hard to dismiss. Photo, GPS and timestamp go together in the case record.</p>
+        </div>
+        <div class="side-card">
+          <h4>Privacy rules</h4>
+          <p>Blur faces and number plates before upload. GreenGuard records land damage, not people.</p>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 5. ACCOUNTABILITY TRACKER ============ -->
+<section class="section section-alt" id="tracker">
+  <div class="container">
+    <h2>Accountability Tracker</h2>
+    <p class="section-sub">Every report is public. Officials can update a case status through a link — quick action shows as green. No response recorded in the app for 7 days marks a case as “Ignored”.</p>
+
+    <div class="dash-cards" id="dashCards"><!-- JS --></div>
+
+    <div class="tracker-top">
+      <div class="chart-card">
+        <h3>Case statuses</h3>
+        <div class="donut-wrap">
+          <svg id="donutChart" viewBox="0 0 42 42" class="donut" aria-hidden="true"></svg>
+          <div id="donutLegend" class="donut-legend"><!-- JS --></div>
+        </div>
+      </div>
+      <div class="escal-card">
+        <h3>Escalation timeline</h3>
+        <div class="esc-line">
+          <div class="esc-step"><span class="esc-day">Day 7</span><p>Factual public post — the case is published on the scoreboard.</p></div>
+          <div class="esc-step"><span class="esc-day">Day 15</span><p>Reminder sent to a senior officer, listed publicly.</p></div>
+          <div class="esc-step"><span class="esc-day">Day 30</span><p>Auto-drafted RTI application ready to file.</p></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="table-tools">
+      <div class="filters" id="statusFilters">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="Sent">Sent</button>
+        <button class="filter-btn" data-filter="Acknowledged">Acknowledged</button>
+        <button class="filter-btn" data-filter="Action Taken">Action Taken</button>
+        <button class="filter-btn" data-filter="Ignored">Ignored</button>
+      </div>
+      <input type="search" id="caseSearch" class="search-box" placeholder="🔍 Search case, location…" />
+    </div>
+
+    <div class="table-scroll">
+      <table id="caseTable">
+        <thead>
+          <tr><th>Case ID</th><th>Location</th><th>Date Reported</th><th>Status</th><th>Days Waiting</th><th>Action</th></tr>
+        </thead>
+        <tbody id="caseTableBody"><!-- JS --></tbody>
+      </table>
+    </div>
+    <p class="table-note" id="caseEmpty" hidden>No cases match this filter.</p>
+  </div>
+</section>
+
+<!-- ============ 6. NGO AND VOLUNTEER ============ -->
+<section class="section" id="ngos">
+  <div class="container">
+    <h2>NGOs &amp; Volunteers</h2>
+    <p class="section-sub">Sample organisations already working on urban green cover around Hyderabad. Verify each organisation before joining or donating.</p>
+
+    <div class="ngo-grid">
+      <div class="ngo-card">
+        <div class="ngo-emoji">🌳</div>
+        <h3>Haritha Collective</h3>
+        <p>Sample NGO · afforestation drives on city-edge commons and degraded lakebeds.</p>
+        <span class="ngo-tag">4 drives this quarter</span>
+      </div>
+      <div class="ngo-card">
+        <div class="ngo-emoji">🐦</div>
+        <h3>Deccan Forest Forum</h3>
+        <p>Sample NGO · legal awareness, forest-rights documentation, trail clean-ups.</p>
+        <span class="ngo-tag">Weekend patrols</span>
+      </div>
+      <div class="ngo-card">
+        <div class="ngo-emoji">💧</div>
+        <h3>Lake &amp; Greens Watch</h3>
+        <p>Sample NGO · water-body buffer restoration and citizen science greening surveys.</p>
+        <span class="ngo-tag">Student friendly</span>
+      </div>
+    </div>
+
+    <div class="ngo-cta">
+      <button class="btn btn-primary" id="volunteerBtn">Join as Volunteer</button>
+      <span class="cta-msg" id="volunteerMsg" hidden>Thanks! This is a demo — in the real app this connects you to the nearest verified group.</span>
+    </div>
+
+    <h3 class="drives-title">Upcoming plantation drives</h3>
+    <div class="drives-list">
+      <div class="drive-item"><div><strong>Miyawaki plot prep — Osman Sagar buffer</strong><span>Sun 25 Oct · 7–10 AM · bring cap &amp; water</span></div><button class="btn btn-outline btn-small drive-signup">Sign Up</button></div>
+      <div class="drive-item"><div><strong>Tree guards &amp; mulching — Kadambari reserve edge</strong><span>Sat 31 Oct · 6:30–9 AM · 40 volunteers needed</span></div><button class="btn btn-outline btn-small drive-signup">Sign Up</button></div>
+      <div class="drive-item"><div><strong>Sapling distribution — Mokila village gate</strong><span>Sun 8 Nov · 9–11 AM · family friendly</span></div><button class="btn btn-outline btn-small drive-signup">Sign Up</button></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 7. HOW IT WORKS ============ -->
+<section class="section section-alt" id="how">
+  <div class="container">
+    <h2>How It Works</h2>
+    <p class="section-sub">Five steps from raw data to public accountability.</p>
+    <div class="steps">
+      <div class="step"><span class="step-num">1</span><h3>Satellite flags change</h3><p>Periodic satellite comparisons flag large green-cover changes in watch zones.</p></div>
+      <div class="step"><span class="step-num">2</span><h3>Citizens verify</h3><p>Nearby volunteers confirm on the ground with a live photo, GPS and timestamp.</p></div>
+      <div class="step"><span class="step-num">3</span><h3>Cameras give proof</h3><p>Pilot cameras at high-risk spots provide continuous recorded evidence.</p></div>
+      <div class="step"><span class="step-num">4</span><h3>Report goes to Forest Department</h3><p>The complete case is submitted to the relevant authority for action.</p></div>
+      <div class="step"><span class="step-num">5</span><h3>Public tracker shows the result</h3><p>Status stays visible on the tracker: acknowledged, acted on — or ignored.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- ============ 8. GOALS AND HONEST LIMITS ============ -->
+<section class="section" id="goals">
+  <div class="container">
+    <h2>Goals &amp; Honest Limits</h2>
+    <div class="sdg-grid">
+      <div class="sdg-card main"><span class="sdg-num">SDG 15</span><h4>Life on Land</h4><p>Main goal — halt the loss of green land and forest around Hyderabad.</p></div>
+      <div class="sdg-card"><span class="sdg-num">SDG 13</span><h4>Climate Action</h4><p>Tree cover stores carbon and cools the city.</p></div>
+      <div class="sdg-card"><span class="sdg-num">SDG 11</span><h4>Sustainable Cities</h4><p>Protected urban commons make Hyderabad liveable.</p></div>
+      <div class="sdg-card"><span class="sdg-num">SDG 16</span><h4>Peace, Justice &amp; Strong Institutions</h4><p>Transparency and access to information for public institutions.</p></div>
+      <div class="sdg-card"><span class="sdg-num">SDG 17</span><h4>Partnerships</h4><p>Citizens, NGOs and departments working on shared data.</p></div>
+    </div>
+
+    <div class="limits-box">
+      <h3>⚠️ Honest limits</h3>
+      <ul>
+        <li>Satellites miss small cuts — individual trees are below detection and verification needs people or cameras.</li>
+        <li>Cameras are a small pilot — 3 sample sites cannot cover every trail or road.</li>
+        <li>GreenGuard cannot force authorities to act — it only makes ignoring a report visible.</li>
+        <li>“Ignored” means no response recorded in the app — the department may have acted without updating the status.</li>
+        <li>No claim of illegality is made without official or court confirmation — this app publishes facts and asks questions.</li>
+      </ul>
+    </div>
+  </div>
+</section>
+</main>
+
+<!-- ============ 9. FOOTER ============ -->
+<footer class="footer">
+  <div class="container">
+    <p><strong>🌿 GreenGuard</strong> — built for Hack4SDG Ideathon</p>
+    <p class="footer-disclaimer">All data, cases and footage on this page are for demonstration only. Nothing here is a factual claim about any real place, person or organisation.</p>
+  </div>
+</footer>
+
+<!-- Modal for CCTV full view / generated cards -->
+<div class="modal" id="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+  <div class="modal-inner">
+    <div class="modal-head">
+      <h3 id="modalTitle">Camera feed</h3>
+      <button class="modal-close" id="modalClose" aria-label="Close">✕</button>
+    </div>
+    <div class="modal-body" id="modalBody"></div>
+  </div>
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" defer></script>
+<script src="js/app.js?v=11" defer></script>
+</body>
+</html>
